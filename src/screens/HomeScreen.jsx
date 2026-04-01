@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAge } from '../context/AgeContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../theme';
 
 const MODES = [
@@ -42,6 +43,7 @@ const MODES = [
 ];
 
 export default function HomeScreen({ navigation }) {
+  const { ageProfile } = useAge();
   const mascotScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -68,6 +70,18 @@ export default function HomeScreen({ navigation }) {
 
         <Text style={styles.title}>¡Hola, Mundo!</Text>
         <Text style={styles.subtitle}>Learn Spanish Together 🇲🇽</Text>
+
+        {ageProfile && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ageselect')}
+            style={styles.agePill}
+          >
+            <Text style={styles.agePillText}>
+              {ageProfile.emoji} {ageProfile.label} · {ageProfile.ageRange}
+            </Text>
+            <Text style={styles.agePillChange}>Change ›</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.buttonsContainer}>
           {MODES.map((mode) => (
@@ -141,7 +155,27 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     marginTop: SPACING.xs,
-    marginBottom: SPACING.xl,
+    fontWeight: '600',
+  },
+  agePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  agePillText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  agePillChange: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 13,
     fontWeight: '600',
   },
   buttonsContainer: {

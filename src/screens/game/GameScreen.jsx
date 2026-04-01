@@ -10,26 +10,29 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { CATEGORIES } from '../../data/vocabulary';
+import { getAllWordsForLevel } from '../../data/vocabulary';
 import { useSpeech } from '../../hooks/useSpeech';
+import { useAge } from '../../context/AgeContext';
 import GameChoice from './GameChoice';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
-const NUM_CHOICES = 3;
 
-function pickQuestion(allWords) {
+function pickQuestion(allWords, numChoices) {
   const shuffled = [...allWords].sort(() => Math.random() - 0.5);
-  const choices = shuffled.slice(0, NUM_CHOICES);
-  const correct = choices[Math.floor(Math.random() * NUM_CHOICES)];
+  const choices = shuffled.slice(0, numChoices);
+  const correct = choices[Math.floor(Math.random() * numChoices)];
   return { choices, correct };
 }
 
 export default function GameScreen({ navigation }) {
-  const allWords = CATEGORIES.flatMap((c) => c.words);
+  const { ageProfile } = useAge();
+  const level = ageProfile?.vocabLevel ?? 1;
+  const numChoices = ageProfile?.gameChoices ?? 3;
+  const allWords = getAllWordsForLevel(level);
   const { speakPhrase, speak, stop } = useSpeech();
 
-  const [question, setQuestion] = useState(() => pickQuestion(allWords));
+  const [question, setQuestion] = useState(() => pickQuestion(allWords, numChoices));
   const [choiceStates, setChoiceStates] = useState({});
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
@@ -85,7 +88,7 @@ export default function GameScreen({ navigation }) {
     }
   };
 
-  const nextQuestion = () => setQuestion(pickQuestion(allWords));
+  const nextQuestion = () => setQuestion(pickQuestion(allWords, numChoices));
 
   return (
     <LinearGradient colors={['#FFF0F8', '#F0F8FF', '#F8FFF0']} style={styles.gradient}>

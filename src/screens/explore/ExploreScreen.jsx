@@ -10,13 +10,17 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CATEGORIES } from '../../data/vocabulary';
+import { getCategoriesForLevel } from '../../data/vocabulary';
+import { useAge } from '../../context/AgeContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - SPACING.lg * 2 - SPACING.md) / 2;
 
 export default function ExploreScreen({ navigation }) {
+  const { ageProfile } = useAge();
+  const level = ageProfile?.vocabLevel ?? 1;
+  const categories = getCategoriesForLevel(level);
   return (
     <LinearGradient colors={['#FFF8F0', '#F0E8FF']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
@@ -32,7 +36,7 @@ export default function ExploreScreen({ navigation }) {
         <Text style={styles.promptEs}>¡Elige una categoría!</Text>
 
         <FlatList
-          data={CATEGORIES}
+          data={categories}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.grid}

@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getCategoryById } from '../../data/vocabulary';
+import { getCategoryById, getWordsForLevel } from '../../data/vocabulary';
 import { useSpeech } from '../../hooks/useSpeech';
+import { useAge } from '../../context/AgeContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
@@ -21,6 +22,8 @@ export default function WordGrid({ route, navigation }) {
   const { categoryId } = route.params;
   const category = getCategoryById(categoryId);
   const { speak } = useSpeech();
+  const { ageProfile } = useAge();
+  const words = getWordsForLevel(category, ageProfile?.vocabLevel ?? 1);
 
   return (
     <LinearGradient colors={['#FFF8F0', '#F0E8FF']} style={styles.gradient}>
@@ -39,7 +42,6 @@ export default function WordGrid({ route, navigation }) {
         <Text style={styles.tapHint}>Tap a word to hear it! 🔊</Text>
 
         <FlatList
-          data={category.words}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.grid}
