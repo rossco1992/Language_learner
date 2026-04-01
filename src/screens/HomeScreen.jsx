@@ -19,6 +19,13 @@ const MODES = [
     gradient: ['#FF6B6B', '#FF8E53'],
   },
   {
+    id: 'videos',
+    icon: '🎬',
+    label: 'Videos',
+    labelEs: '¡Videos!',
+    gradient: ['#F7971E', '#FFD200'],
+  },
+  {
     id: 'explore',
     icon: '🔍',
     label: 'Explore',
