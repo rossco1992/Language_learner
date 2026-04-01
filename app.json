@@ -3,6 +3,7 @@
     "name": "Hola Mundo!",
     "slug": "hola-mundo",
     "version": "1.0.0",
+    "scheme": "holamundo",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

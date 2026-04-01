@@ -47,7 +47,7 @@ export default function ExploreScreen({ navigation }) {
             <CategoryCard
               category={item}
               delay={index * 100}
-              onPress={() => navigation.navigate('WordGrid', { categoryId: item.id })}
+              onPress={() => navigation.navigate('wordgrid', { categoryId: item.id })}
             />
           )}
         />
