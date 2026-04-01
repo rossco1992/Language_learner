@@ -22,8 +22,6 @@
       },
       "package": "com.holamundo.spanishlearner"
     },
-    "plugins": [
-      "expo-speech"
-    ]
+    "plugins": []
   }
 }
