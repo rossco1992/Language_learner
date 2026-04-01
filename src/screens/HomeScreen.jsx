@@ -1,104 +1,67 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  withSpring,
-  Easing,
-} from 'react-native-reanimated';
-import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from '../theme';
-
-const { width } = Dimensions.get('window');
+import { COLORS, SPACING, RADIUS, SHADOW } from '../theme';
 
 const MODES = [
   {
-    id: 'Show',
+    id: 'show',
     icon: '📺',
     label: 'Watch',
     labelEs: '¡Ver!',
     gradient: ['#FF6B6B', '#FF8E53'],
-    desc: 'Auto-play show',
   },
   {
-    id: 'Explore',
+    id: 'explore',
     icon: '🔍',
     label: 'Explore',
     labelEs: '¡Explorar!',
     gradient: ['#43E97B', '#38F9D7'],
-    desc: 'Tap & learn',
   },
   {
-    id: 'Game',
+    id: 'game',
     icon: '🎮',
     label: 'Play',
     labelEs: '¡Jugar!',
     gradient: ['#A18CD1', '#FBC2EB'],
-    desc: 'Find the word',
   },
 ];
 
 export default function HomeScreen({ navigation }) {
-  const mascotScale = useSharedValue(1);
-  const mascotRotate = useSharedValue(0);
+  const mascotScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    mascotScale.value = withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 800, easing: Easing.out(Easing.quad) }),
-        withTiming(1.0, { duration: 800, easing: Easing.in(Easing.quad) })
-      ),
-      -1,
-      false
-    );
-    mascotRotate.value = withRepeat(
-      withSequence(
-        withTiming(-8, { duration: 600 }),
-        withTiming(8, { duration: 600 }),
-        withTiming(0, { duration: 300 })
-      ),
-      -1,
-      false
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(mascotScale, { toValue: 1.12, duration: 800, useNativeDriver: true }),
+        Animated.timing(mascotScale, { toValue: 1.0, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
   }, []);
-
-  const mascotStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: mascotScale.value },
-      { rotate: `${mascotRotate.value}deg` },
-    ],
-  }));
 
   return (
     <LinearGradient colors={['#6C63FF', '#A18CD1', '#FBC2EB']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
-        {/* Stars decoration */}
         <View style={styles.starsRow}>
           {['⭐', '🌟', '✨', '⭐', '🌟'].map((s, i) => (
             <Text key={i} style={[styles.star, { opacity: 0.4 + i * 0.1 }]}>{s}</Text>
           ))}
         </View>
 
-        {/* Mascot */}
-        <Animated.View style={[styles.mascotContainer, mascotStyle]}>
+        <Animated.View style={{ transform: [{ scale: mascotScale }] }}>
           <Text style={styles.mascotEmoji}>🦉</Text>
         </Animated.View>
 
-        {/* Title */}
         <Text style={styles.title}>¡Hola, Mundo!</Text>
         <Text style={styles.subtitle}>Learn Spanish Together 🇲🇽</Text>
 
-        {/* Mode buttons */}
         <View style={styles.buttonsContainer}>
           {MODES.map((mode) => (
             <ModeButton
@@ -114,22 +77,18 @@ export default function HomeScreen({ navigation }) {
 }
 
 function ModeButton({ mode, onPress }) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
-    scale.value = withSequence(
-      withSpring(0.92),
-      withSpring(1)
-    );
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.93, duration: 80, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
     onPress();
   };
 
   return (
-    <Animated.View style={[styles.buttonWrapper, animatedStyle]}>
+    <Animated.View style={[styles.buttonWrapper, { transform: [{ scale }] }]}>
       <TouchableOpacity onPress={handlePress} activeOpacity={0.9}>
         <LinearGradient
           colors={mode.gradient}
@@ -149,30 +108,16 @@ function ModeButton({ mode, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  safe: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
+  gradient: { flex: 1 },
+  safe: { flex: 1, alignItems: 'center', paddingHorizontal: SPACING.lg },
   starsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
     marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
   },
-  star: {
-    fontSize: 20,
-  },
-  mascotContainer: {
-    marginTop: SPACING.lg,
-  },
-  mascotEmoji: {
-    fontSize: 100,
-  },
+  star: { fontSize: 20 },
+  mascotEmoji: { fontSize: 100, marginTop: SPACING.lg },
   title: {
     fontSize: 42,
     fontWeight: '900',
@@ -199,10 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: SPACING.xl,
   },
-  buttonWrapper: {
-    width: '100%',
-    ...SHADOW.button,
-  },
+  buttonWrapper: { width: '100%', ...SHADOW.button },
   modeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,12 +153,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     gap: SPACING.lg,
   },
-  modeIcon: {
-    fontSize: 52,
-  },
-  modeLabelContainer: {
-    flex: 1,
-  },
+  modeIcon: { fontSize: 52 },
+  modeLabelContainer: { flex: 1 },
   modeLabel: {
     fontSize: 30,
     fontWeight: '800',

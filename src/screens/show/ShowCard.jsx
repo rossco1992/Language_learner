@@ -1,50 +1,28 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from '../../theme';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
+import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-export default function ShowCard({ word, categoryGradient }) {
-  const scale = useSharedValue(0.4);
-  const opacity = useSharedValue(0);
-  const emojiScale = useSharedValue(0.2);
+export default function ShowCard({ word }) {
+  const scale = useRef(new Animated.Value(0.5)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    scale.value = 0.4;
-    opacity.value = 0;
-    emojiScale.value = 0.2;
-
-    opacity.value = withTiming(1, { duration: 300 });
-    scale.value = withSpring(1, { damping: 10, stiffness: 120, mass: 0.8 });
-    emojiScale.value = withSpring(1, {
-      damping: 8,
-      stiffness: 100,
-      mass: 0.6,
-    });
+    scale.setValue(0.5);
+    opacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 120 }),
+      Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
   }, [word?.id]);
-
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  const emojiStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: emojiScale.value }],
-  }));
 
   if (!word) return null;
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.card, { backgroundColor: word.bg || '#FFF' }, cardStyle]}>
-        <Animated.Text style={[styles.emoji, emojiStyle]}>{word.emoji}</Animated.Text>
+      <Animated.View style={[styles.card, { backgroundColor: word.bg || '#FFF' }, { transform: [{ scale }], opacity }]}>
+        <Text style={styles.emoji}>{word.emoji}</Text>
         <Text style={styles.spanishWord}>{word.es}</Text>
         <View style={styles.divider} />
         <Text style={styles.englishWord}>{word.en}</Text>
@@ -69,10 +47,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     ...SHADOW.card,
   },
-  emoji: {
-    fontSize: 120,
-    marginBottom: SPACING.lg,
-  },
+  emoji: { fontSize: 120, marginBottom: SPACING.lg },
   spanishWord: {
     fontSize: 68,
     fontWeight: '900',

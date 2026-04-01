@@ -1,60 +1,43 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
 const CHOICE_SIZE = (width - SPACING.lg * 2 - SPACING.md * 2) / 3;
 
 export default function GameChoice({ word, onPress, state }) {
-  // state: 'idle' | 'correct' | 'wrong'
-  const scale = useSharedValue(1);
-  const shakeX = useSharedValue(0);
+  const scale = useRef(new Animated.Value(1)).current;
+  const shakeX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (state === 'correct') {
-      scale.value = withSequence(
-        withSpring(1.2, { damping: 5, stiffness: 200 }),
-        withSpring(1.0)
-      );
+      Animated.sequence([
+        Animated.spring(scale, { toValue: 1.2, useNativeDriver: true, damping: 5, stiffness: 200 }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true }),
+      ]).start();
     } else if (state === 'wrong') {
-      shakeX.value = withSequence(
-        withTiming(-12, { duration: 60 }),
-        withTiming(12, { duration: 60 }),
-        withTiming(-10, { duration: 60 }),
-        withTiming(10, { duration: 60 }),
-        withTiming(0, { duration: 60 })
-      );
+      Animated.sequence([
+        Animated.timing(shakeX, { toValue: -10, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 10, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: -8, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 8, duration: 60, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 0, duration: 60, useNativeDriver: true }),
+      ]).start();
     }
   }, [state]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateX: shakeX.value }],
-  }));
-
   const bgColor =
-    state === 'correct'
-      ? '#D4FFDD'
-      : state === 'wrong'
-      ? '#FFD4D4'
-      : word.bg || '#FFF';
+    state === 'correct' ? '#D4FFDD' :
+    state === 'wrong' ? '#FFD4D4' :
+    word.bg || '#FFF';
 
   const borderColor =
-    state === 'correct'
-      ? '#43E97B'
-      : state === 'wrong'
-      ? '#FF6B6B'
-      : 'transparent';
+    state === 'correct' ? '#43E97B' :
+    state === 'wrong' ? '#FF6B6B' :
+    'transparent';
 
   return (
-    <Animated.View style={[styles.wrapper, animatedStyle, SHADOW.card]}>
+    <Animated.View style={[styles.wrapper, SHADOW.card, { transform: [{ scale }, { translateX: shakeX }] }]}>
       <TouchableOpacity
         onPress={() => state === 'idle' && onPress()}
         activeOpacity={0.8}
@@ -62,9 +45,7 @@ export default function GameChoice({ word, onPress, state }) {
       >
         <Text style={styles.emoji}>{word.emoji}</Text>
         {state !== 'idle' && (
-          <Text style={styles.stateIcon}>
-            {state === 'correct' ? '✅' : '❌'}
-          </Text>
+          <Text style={styles.stateIcon}>{state === 'correct' ? '✅' : '❌'}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -72,9 +53,7 @@ export default function GameChoice({ word, onPress, state }) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    borderRadius: RADIUS.lg,
-  },
+  wrapper: { borderRadius: RADIUS.lg },
   card: {
     width: CHOICE_SIZE,
     height: CHOICE_SIZE,
@@ -82,13 +61,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: {
-    fontSize: 56,
-  },
-  stateIcon: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    fontSize: 22,
-  },
+  emoji: { fontSize: 56 },
+  stateIcon: { position: 'absolute', top: 4, right: 4, fontSize: 22 },
 });

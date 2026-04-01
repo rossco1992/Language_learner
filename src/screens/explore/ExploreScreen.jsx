@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,10 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-} from 'react-native-reanimated';
 import { CATEGORIES } from '../../data/vocabulary';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
@@ -25,7 +20,6 @@ export default function ExploreScreen({ navigation }) {
   return (
     <LinearGradient colors={['#FFF8F0', '#F0E8FF']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
@@ -43,10 +37,9 @@ export default function ExploreScreen({ navigation }) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
-          renderItem={({ item, index }) => (
+          renderItem={({ item }) => (
             <CategoryCard
               category={item}
-              delay={index * 100}
               onPress={() => navigation.navigate('wordgrid', { categoryId: item.id })}
             />
           )}
@@ -56,20 +49,19 @@ export default function ExploreScreen({ navigation }) {
   );
 }
 
-function CategoryCard({ category, onPress, delay }) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+function CategoryCard({ category, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
-    scale.value = withSequence(withSpring(0.9), withSpring(1));
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 0.92, duration: 80, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
     onPress();
   };
 
   return (
-    <Animated.View style={[styles.cardWrapper, animatedStyle]}>
+    <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>
       <TouchableOpacity onPress={handlePress} activeOpacity={0.85}>
         <LinearGradient
           colors={category.gradient}
@@ -99,84 +91,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  backBtn: {
-    width: 80,
-    paddingVertical: SPACING.sm,
-  },
-  backText: {
-    color: COLORS.primary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerTitle: {
-    color: COLORS.dark,
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  prompt: {
-    textAlign: 'center',
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.dark,
-    marginTop: SPACING.md,
-  },
-  promptEs: {
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.gray,
-    marginBottom: SPACING.lg,
-  },
-  grid: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-    gap: SPACING.md,
-  },
-  row: {
-    gap: SPACING.md,
-  },
-  cardWrapper: {
-    width: CARD_SIZE,
-    ...SHADOW.button,
-  },
-  card: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.md,
-  },
-  cardEmoji: {
-    fontSize: 48,
-    marginBottom: SPACING.xs,
-  },
-  cardLabel: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.white,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  cardLabelEs: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  wordCount: {
-    marginTop: SPACING.sm,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  wordCountText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
+  backBtn: { width: 80, paddingVertical: SPACING.sm },
+  backText: { color: COLORS.primary, fontSize: 16, fontWeight: '600' },
+  headerTitle: { color: COLORS.dark, fontSize: 22, fontWeight: '800' },
+  prompt: { textAlign: 'center', fontSize: 28, fontWeight: '800', color: COLORS.dark, marginTop: SPACING.md },
+  promptEs: { textAlign: 'center', fontSize: 18, fontWeight: '600', color: COLORS.gray, marginBottom: SPACING.lg },
+  grid: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl, gap: SPACING.md },
+  row: { gap: SPACING.md },
+  cardWrapper: { width: CARD_SIZE, ...SHADOW.button },
+  card: { width: CARD_SIZE, height: CARD_SIZE, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', padding: SPACING.md },
+  cardEmoji: { fontSize: 48, marginBottom: SPACING.xs },
+  cardLabel: { fontSize: 18, fontWeight: '800', color: COLORS.white, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  cardLabelEs: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: 2 },
+  wordCount: { marginTop: SPACING.sm, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 3 },
+  wordCountText: { fontSize: 12, fontWeight: '700', color: COLORS.white },
 });
