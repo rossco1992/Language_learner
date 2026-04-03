@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -71,7 +72,7 @@ export default function VideosScreen({ navigation }) {
           renderItem={({ item }) => (
             <VideoCard
               video={item}
-              onPress={() => navigation.navigate('videoplayer', { youtubeId: item.youtubeId, title: item.titleEs })}
+              onPress={() => navigation.navigate('videoplayer', { youtubeId: item.youtubeId, title: item.titleEs, videoId: item.id })}
             />
           )}
         />
@@ -82,6 +83,7 @@ export default function VideosScreen({ navigation }) {
 
 function VideoCard({ video, onPress }) {
   const scale = useRef(new Animated.Value(1)).current;
+  const [imgError, setImgError] = useState(false);
 
   const handlePress = () => {
     Animated.sequence([
@@ -96,11 +98,18 @@ function VideoCard({ video, onPress }) {
       <TouchableOpacity onPress={handlePress} activeOpacity={0.92} style={styles.card}>
         {/* Thumbnail */}
         <View style={styles.thumbnailContainer}>
-          <Image
-            source={{ uri: getThumbnailUrl(video.youtubeId) }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
+          {imgError ? (
+            <View style={[styles.thumbnail, styles.thumbnailFallback]}>
+              <Text style={styles.thumbnailFallbackEmoji}>{video.emoji}</Text>
+            </View>
+          ) : (
+            <Image
+              source={{ uri: getThumbnailUrl(video.youtubeId) }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+              onError={() => setImgError(true)}
+            />
+          )}
           <View style={styles.playOverlay}>
             <Text style={styles.playIcon}>▶</Text>
           </View>
@@ -164,6 +173,8 @@ const styles = StyleSheet.create({
   card: { borderRadius: RADIUS.lg, overflow: 'hidden' },
   thumbnailContainer: { width: CARD_WIDTH, height: CARD_WIDTH * 0.56, position: 'relative' },
   thumbnail: { width: '100%', height: '100%', backgroundColor: '#333' },
+  thumbnailFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#1a1a2e' },
+  thumbnailFallbackEmoji: { fontSize: 64 },
   playOverlay: {
     position: 'absolute',
     inset: 0,
