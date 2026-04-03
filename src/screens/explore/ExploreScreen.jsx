@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getCategoriesForLevel } from '../../data/vocabulary';
+import { getUnitsForLevel } from '../../data/curriculum';
 import { useAge } from '../../context/AgeContext';
+import { useProgress } from '../../context/ProgressContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
@@ -20,7 +21,9 @@ const CARD_SIZE = (width - SPACING.lg * 2 - SPACING.md) / 2;
 export default function ExploreScreen({ navigation }) {
   const { ageProfile } = useAge();
   const level = ageProfile?.vocabLevel ?? 1;
-  const categories = getCategoriesForLevel(level);
+  const units = getUnitsForLevel(level);
+  const { getUnitProgress } = useProgress();
+
   return (
     <LinearGradient colors={['#FFF8F0', '#F0E8FF']} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
@@ -32,19 +35,20 @@ export default function ExploreScreen({ navigation }) {
           <View style={styles.backBtn} />
         </View>
 
-        <Text style={styles.prompt}>Choose a category!</Text>
-        <Text style={styles.promptEs}>¡Elige una categoría!</Text>
+        <Text style={styles.prompt}>Choose a topic!</Text>
+        <Text style={styles.promptEs}>¡Elige un tema!</Text>
 
         <FlatList
-          data={categories}
+          data={units}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
-            <CategoryCard
-              category={item}
-              onPress={() => navigation.navigate('wordgrid', { categoryId: item.id })}
+            <UnitCard
+              unit={item}
+              progress={getUnitProgress(item)}
+              onPress={() => navigation.navigate('unit', { unitId: item.id })}
             />
           )}
         />
@@ -53,7 +57,7 @@ export default function ExploreScreen({ navigation }) {
   );
 }
 
-function CategoryCard({ category, onPress }) {
+function UnitCard({ unit, progress, onPress }) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -64,21 +68,28 @@ function CategoryCard({ category, onPress }) {
     onPress();
   };
 
+  const pct = Math.round(progress * 100);
+
   return (
     <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>
       <TouchableOpacity onPress={handlePress} activeOpacity={0.85}>
         <LinearGradient
-          colors={category.gradient}
+          colors={unit.gradient}
           style={styles.card}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Text style={styles.cardEmoji}>{category.emoji}</Text>
-          <Text style={styles.cardLabel}>{category.label}</Text>
-          <Text style={styles.cardLabelEs}>{category.labelEs}</Text>
-          <View style={styles.wordCount}>
-            <Text style={styles.wordCountText}>{category.words.length} words</Text>
+          <Text style={styles.cardEmoji}>{unit.emoji}</Text>
+          <Text style={styles.cardLabel}>{unit.label}</Text>
+          <Text style={styles.cardLabelEs}>{unit.labelEs}</Text>
+
+          {/* Progress bar */}
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${pct}%` }]} />
           </View>
+          <Text style={styles.progressText}>
+            {pct > 0 ? `${pct}% done` : `${unit.lessons.length} lessons`}
+          </Text>
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -104,9 +115,10 @@ const styles = StyleSheet.create({
   row: { gap: SPACING.md },
   cardWrapper: { width: CARD_SIZE, ...SHADOW.button },
   card: { width: CARD_SIZE, height: CARD_SIZE, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', padding: SPACING.md },
-  cardEmoji: { fontSize: 48, marginBottom: SPACING.xs },
-  cardLabel: { fontSize: 18, fontWeight: '800', color: COLORS.white, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
-  cardLabelEs: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: 2 },
-  wordCount: { marginTop: SPACING.sm, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 3 },
-  wordCountText: { fontSize: 12, fontWeight: '700', color: COLORS.white },
+  cardEmoji: { fontSize: 44, marginBottom: SPACING.xs },
+  cardLabel: { fontSize: 16, fontWeight: '800', color: COLORS.white, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  cardLabelEs: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: 2 },
+  progressTrack: { width: '85%', height: 6, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: RADIUS.full, marginTop: SPACING.sm, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: RADIUS.full },
+  progressText: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.9)', marginTop: 4 },
 });

@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AgeProvider, useAge } from '../src/context/AgeContext';
+import { ProgressProvider } from '../src/context/ProgressContext';
 
 function RootLayoutInner() {
   const { ageProfile, loading } = useAge();
@@ -27,7 +28,9 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <AgeProvider>
-      <RootLayoutInner />
+      <ProgressProvider>
+        <RootLayoutInner />
+      </ProgressProvider>
     </AgeProvider>
   );
 }

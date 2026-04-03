@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getCategoriesForLevel, getWordsForLevel } from '../../data/vocabulary';
+import { getUnitsForLevel, getAllWordsFromCurriculum } from '../../data/curriculum';
 import { useSpeech } from '../../hooks/useSpeech';
 import { useAutoPlay } from '../../hooks/useAutoPlay';
 import { useAge } from '../../context/AgeContext';
@@ -16,15 +16,25 @@ import ShowCard from './ShowCard';
 import ShowControls from './ShowControls';
 import { COLORS, SPACING, RADIUS } from '../../theme';
 
+// Flatten all words for a given unit across its lessons
+function getWordsForUnit(unit) {
+  const words = [];
+  for (const lesson of unit.lessons ?? []) {
+    if (lesson.type === 'dialogue') continue;
+    words.push(...(lesson.words ?? []));
+  }
+  return words;
+}
+
 export default function ShowScreen({ navigation }) {
   const { ageProfile } = useAge();
   const level = ageProfile?.vocabLevel ?? 1;
   const interval = ageProfile?.showInterval ?? 4000;
 
-  const categories = getCategoriesForLevel(level);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id);
-  const category = categories.find((c) => c.id === selectedCategoryId) ?? categories[0];
-  const words = getWordsForLevel(category, level);
+  const units = getUnitsForLevel(level);
+  const [selectedUnitId, setSelectedUnitId] = useState(units[0]?.id);
+  const unit = units.find((u) => u.id === selectedUnitId) ?? units[0];
+  const words = unit ? getWordsForUnit(unit) : [];
 
   const { index, isPlaying, toggle, next, prev } = useAutoPlay(words.length, interval);
   const { speak, stop } = useSpeech();
@@ -37,10 +47,10 @@ export default function ShowScreen({ navigation }) {
 
   useEffect(() => () => stop(), []);
 
-  // Reset category if it's no longer available for this level
+  // Reset unit if it's no longer available for this level
   useEffect(() => {
-    if (!categories.find((c) => c.id === selectedCategoryId)) {
-      setSelectedCategoryId(categories[0]?.id);
+    if (!units.find((u) => u.id === selectedUnitId)) {
+      setSelectedUnitId(units[0]?.id);
     }
   }, [level]);
 
@@ -66,15 +76,15 @@ export default function ShowScreen({ navigation }) {
           style={styles.catScroll}
           contentContainerStyle={styles.catScrollContent}
         >
-          {categories.map((cat) => (
+          {units.map((u) => (
             <TouchableOpacity
-              key={cat.id}
-              onPress={() => setSelectedCategoryId(cat.id)}
-              style={[styles.catChip, selectedCategoryId === cat.id && styles.catChipActive]}
+              key={u.id}
+              onPress={() => setSelectedUnitId(u.id)}
+              style={[styles.catChip, selectedUnitId === u.id && styles.catChipActive]}
             >
-              <Text style={styles.catChipEmoji}>{cat.emoji}</Text>
-              <Text style={[styles.catChipLabel, selectedCategoryId === cat.id && styles.catChipLabelActive]}>
-                {cat.label}
+              <Text style={styles.catChipEmoji}>{u.emoji}</Text>
+              <Text style={[styles.catChipLabel, selectedUnitId === u.id && styles.catChipLabelActive]}>
+                {u.label}
               </Text>
             </TouchableOpacity>
           ))}

@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { getAllWordsForLevel } from '../../data/vocabulary';
+import { getAllWordsFromCurriculum } from '../../data/curriculum';
 import { useSpeech } from '../../hooks/useSpeech';
 import { useAge } from '../../context/AgeContext';
 import GameChoice from './GameChoice';
@@ -29,7 +29,7 @@ export default function GameScreen({ navigation }) {
   const { ageProfile } = useAge();
   const level = ageProfile?.vocabLevel ?? 1;
   const numChoices = ageProfile?.gameChoices ?? 3;
-  const allWords = getAllWordsForLevel(level);
+  const allWords = getAllWordsFromCurriculum(level);
   const { speakPhrase, speak, stop } = useSpeech();
 
   const [question, setQuestion] = useState(() => pickQuestion(allWords, numChoices));
