@@ -744,9 +744,20 @@ export const CURRICULUM = [
 // HELPER FUNCTIONS
 // ─────────────────────────────────────────
 
-/** Units available for a given level */
-export const getUnitsForLevel = (level) =>
-  CURRICULUM.filter((u) => u.minLevel <= level);
+/** All units — always show the full curriculum in Explore.
+ *  Lessons inside are filtered by level, but units themselves are always visible. */
+export const getUnitsForLevel = (_level) => CURRICULUM;
+
+/** Count words available inside a unit for a given level */
+export const getWordCountForUnit = (unit, level) => {
+  let count = 0;
+  for (const lesson of unit.lessons ?? []) {
+    if ((lesson.minLevel ?? 1) > level) continue;
+    if (lesson.type === 'dialogue') continue;
+    count += lesson.words?.length ?? 0;
+  }
+  return count;
+};
 
 /** Lessons within a unit that are available for a given level */
 export const getLessonsForUnit = (unitId, level) => {
