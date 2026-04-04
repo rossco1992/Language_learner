@@ -1,54 +1,55 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
+import { COLORS, SPACING, RADIUS, SHADOW, glassDark } from '../../theme';
 
 export default function ShowControls({ isPlaying, onToggle, onPrev, onNext, index, total }) {
   return (
     <View style={styles.container}>
-      {/* Progress dots */}
-      <View style={styles.dotsRow}>
-        {Array.from({ length: total }).map((_, i) => (
+      {/* Progress track */}
+      <View style={styles.trackRow}>
+        <View style={styles.track}>
           <View
-            key={i}
             style={[
-              styles.dot,
-              i === index ? styles.dotActive : styles.dotInactive,
+              styles.trackFill,
+              { width: total > 1 ? `${((index) / (total - 1)) * 100}%` : '100%' },
             ]}
           />
-        ))}
+        </View>
+        <Text style={styles.counter}>{index + 1} / {total}</Text>
       </View>
 
-      {/* Control buttons */}
-      <View style={styles.controls}>
-        <ControlButton icon="⏮" onPress={onPrev} disabled={index === 0} />
-        <ControlButton
-          icon={isPlaying ? '⏸' : '▶️'}
-          onPress={onToggle}
-          large
-          primary
-        />
-        <ControlButton icon="⏭" onPress={onNext} disabled={index === total - 1} />
+      {/* Control buttons — glass pill */}
+      <View style={styles.pillContainer}>
+        <View style={styles.pill}>
+          <NavBtn icon="⏮" onPress={onPrev} disabled={index === 0} />
+
+          {/* Big play/pause */}
+          <TouchableOpacity
+            onPress={onToggle}
+            style={styles.playBtn}
+            activeOpacity={0.8}
+          >
+            {/* Glow ring */}
+            <View style={styles.playGlow} />
+            <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+          </TouchableOpacity>
+
+          <NavBtn icon="⏭" onPress={onNext} disabled={index === total - 1} />
+        </View>
       </View>
     </View>
   );
 }
 
-function ControlButton({ icon, onPress, disabled, large, primary }) {
+function NavBtn({ icon, onPress, disabled }) {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
-      style={[
-        styles.btn,
-        large && styles.btnLarge,
-        primary && styles.btnPrimary,
-        disabled && styles.btnDisabled,
-      ]}
-      activeOpacity={0.75}
+      style={[styles.navBtn, disabled && styles.navBtnDisabled]}
+      activeOpacity={0.7}
     >
-      <Text style={[styles.btnIcon, large && styles.btnIconLarge]}>
-        {icon}
-      </Text>
+      <Text style={styles.navIcon}>{icon}</Text>
     </TouchableOpacity>
   );
 }
@@ -57,56 +58,76 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: SPACING.xl,
     paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+
+  // Progress track
+  trackRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    maxWidth: 260,
+  track: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: RADIUS.full,
+    overflow: 'hidden',
   },
-  dot: {
-    height: 10,
+  trackFill: {
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     borderRadius: RADIUS.full,
   },
-  dotActive: {
-    width: 28,
-    backgroundColor: COLORS.primary,
+  counter: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.5)',
+    minWidth: 40,
+    textAlign: 'right',
   },
-  dotInactive: {
-    width: 10,
-    backgroundColor: 'rgba(108,99,255,0.25)',
-  },
-  controls: {
+
+  // Glass pill
+  pillContainer: { alignItems: 'center' },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.lg,
-  },
-  btn: {
-    width: 64,
-    height: 64,
+    ...glassDark,
     borderRadius: RADIUS.full,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+  },
+
+  navBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  navBtnDisabled: { opacity: 0.25 },
+  navIcon: { fontSize: 22, color: COLORS.white },
+
+  // Play button
+  playBtn: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOW.card,
+    ...SHADOW.float,
   },
-  btnLarge: {
-    width: 88,
-    height: 88,
+  playGlow: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  btnPrimary: {
-    backgroundColor: COLORS.primary,
-  },
-  btnDisabled: {
-    opacity: 0.3,
-  },
-  btnIcon: {
-    fontSize: 28,
-  },
-  btnIconLarge: {
-    fontSize: 36,
-  },
+  playIcon: { fontSize: 32, color: COLORS.dark },
 });

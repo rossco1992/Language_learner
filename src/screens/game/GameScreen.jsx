@@ -13,7 +13,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { getAllWordsFromCurriculum } from '../../data/curriculum';
 import { useSpeech } from '../../hooks/useSpeech';
 import { useAge } from '../../context/AgeContext';
-import GameChoice from './GameChoice';
+import GameChoice, { getChoiceLayout } from './GameChoice';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
@@ -115,19 +115,12 @@ export default function GameScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.choicesContainer}>
-          <Text style={styles.choicesLabel}>Find it! 👆</Text>
-          <View style={styles.choicesRow}>
-            {question.choices.map((word) => (
-              <GameChoice
-                key={word.id}
-                word={word}
-                onPress={() => handleChoice(word)}
-                state={choiceStates[word.id] || 'idle'}
-              />
-            ))}
-          </View>
-        </View>
+        <ChoicesGrid
+          choices={question.choices}
+          choiceStates={choiceStates}
+          numChoices={numChoices}
+          onChoice={handleChoice}
+        />
 
         <Animated.View
           style={[styles.celebration, { transform: [{ scale: celebrationScale }], opacity: celebrationOpacity }]}
@@ -151,6 +144,43 @@ export default function GameScreen({ navigation }) {
   );
 }
 
+function ChoicesGrid({ choices, choiceStates, numChoices, onChoice }) {
+  const { size, columns } = getChoiceLayout(numChoices);
+  // Split into rows based on column count
+  const rows = [];
+  for (let i = 0; i < choices.length; i += columns) {
+    rows.push(choices.slice(i, i + columns));
+  }
+  return (
+    <View style={choiceStyles.container}>
+      <Text style={choiceStyles.label}>Find it! 👆</Text>
+      {rows.map((row, rowIdx) => (
+        <View key={rowIdx} style={choiceStyles.row}>
+          {row.map((word, colIdx) => {
+            const globalIdx = rowIdx * columns + colIdx;
+            return (
+              <View key={word.id} style={{ width: size, height: size }}>
+                <GameChoice
+                  word={word}
+                  onPress={() => onChoice(word)}
+                  state={choiceStates[word.id] || 'idle'}
+                  index={globalIdx}
+                />
+              </View>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const choiceStyles = StyleSheet.create({
+  container: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl, gap: SPACING.sm },
+  label: { textAlign: 'center', fontSize: 20, fontWeight: '700', color: COLORS.dark, marginBottom: SPACING.sm },
+  row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md },
+});
+
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safe: { flex: 1 },
@@ -168,9 +198,6 @@ const styles = StyleSheet.create({
   correctWordEn: { fontSize: 22, fontWeight: '600', color: COLORS.gray, textAlign: 'center' },
   repeatBtn: { marginTop: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, backgroundColor: 'rgba(108,99,255,0.1)', borderRadius: RADIUS.full },
   repeatText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
-  choicesContainer: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl },
-  choicesLabel: { textAlign: 'center', fontSize: 20, fontWeight: '700', color: COLORS.dark, marginBottom: SPACING.md },
-  choicesRow: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.md },
   celebration: { position: 'absolute', top: '35%', left: SPACING.xl, right: SPACING.xl, backgroundColor: '#FFD93D', borderRadius: RADIUS.lg, paddingVertical: SPACING.lg, alignItems: 'center', ...SHADOW.button, zIndex: 10 },
   celebrationText: { fontSize: 42, fontWeight: '900', color: COLORS.dark },
   celebrationSub: { fontSize: 22, fontWeight: '700', color: COLORS.dark, opacity: 0.7 },

@@ -91,7 +91,7 @@ export default function ShowScreen({ navigation }) {
         </ScrollView>
 
         <TouchableOpacity style={styles.cardTouchable} onPress={() => speak(currentWord.es)} activeOpacity={0.95}>
-          <ShowCard word={currentWord} showPhrase={ageProfile?.showPhrases} />
+          <ShowCard word={currentWord} gradient={unit?.gradient} showPhrase={ageProfile?.showPhrases} />
           <Text style={styles.tapHint}>Tap to hear again 🔊</Text>
         </TouchableOpacity>
 
