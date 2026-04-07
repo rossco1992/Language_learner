@@ -12,8 +12,11 @@ import { getUnitsForLevel, getAllWordsFromCurriculum } from '../../data/curricul
 import { useSpeech } from '../../hooks/useSpeech';
 import { useAutoPlay } from '../../hooks/useAutoPlay';
 import { useAge } from '../../context/AgeContext';
+import CoUsePrompt from '../../components/CoUsePrompt';
 import ShowCard from './ShowCard';
 import ShowControls from './ShowControls';
+import { useSession } from '../../context/SessionContext';
+import { useWordTracker } from '../../context/WordTrackerContext';
 import { COLORS, SPACING, RADIUS } from '../../theme';
 
 // Flatten all words for a given unit across its lessons
@@ -33,8 +36,12 @@ export default function ShowScreen({ navigation }) {
 
   const units = getUnitsForLevel(level);
   const [selectedUnitId, setSelectedUnitId] = useState(units[0]?.id);
+  const { ensureSession, recordWordInSession, sessionExpired } = useSession();
+  const { recordExposure } = useWordTracker();
   const unit = units.find((u) => u.id === selectedUnitId) ?? units[0];
-  const words = unit ? getWordsForUnit(unit) : [];
+  const allUnitWords = unit ? getWordsForUnit(unit) : [];
+  // Cap at 6 words per session
+  const words = allUnitWords.slice(0, 6);
 
   const { index, isPlaying, toggle, next, prev } = useAutoPlay(words.length, interval);
   const { speak, stop } = useSpeech();
@@ -42,8 +49,17 @@ export default function ShowScreen({ navigation }) {
   const currentWord = words[index];
 
   useEffect(() => {
-    if (currentWord) speak(currentWord.es);
-  }, [currentWord?.id]);
+    if (currentWord) {
+      ensureSession();
+      speak(currentWord.es);
+      recordWordInSession(currentWord.id);
+      recordExposure(currentWord.id, 'show');
+    }
+    if (sessionExpired) {
+      stop();
+      navigation.replace('sessioncomplete');
+    }
+  }, [currentWord?.id, sessionExpired]);
 
   useEffect(() => () => stop(), []);
 
@@ -94,6 +110,8 @@ export default function ShowScreen({ navigation }) {
           <ShowCard word={currentWord} gradient={unit?.gradient} showPhrase={ageProfile?.showPhrases} />
           <Text style={styles.tapHint}>Tap to hear again 🔊</Text>
         </TouchableOpacity>
+
+        <CoUsePrompt wordIndex={index} currentWord={currentWord} visible={!isPlaying} />
 
         <ShowControls isPlaying={isPlaying} onToggle={toggle} onPrev={prev} onNext={next} index={index} total={words.length} />
       </SafeAreaView>

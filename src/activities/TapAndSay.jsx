@@ -8,6 +8,9 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { getPackById } from '../content/packs';
 import { playWord, playCelebration, stopAudio } from '../audio/audioManager';
 import { useParent } from '../context/ParentContext';
+import { useSession } from '../context/SessionContext';
+import { useWordTracker } from '../context/WordTrackerContext';
+import CoUsePrompt from '../components/CoUsePrompt';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../theme';
 
 const { width, height } = Dimensions.get('window');
@@ -15,7 +18,11 @@ const { width, height } = Dimensions.get('window');
 export default function TapAndSay({ navigation, packId }) {
   const pack = getPackById(packId);
   const { settings, recordWordHeard } = useParent();
-  const words = pack?.words ?? [];
+  const { ensureSession, recordWordInSession, sessionExpired } = useSession();
+  const { recordExposure } = useWordTracker();
+  const allWords = pack?.words ?? [];
+  // Limit to session max (6 words)
+  const words = allWords.slice(0, 6);
 
   const [index, setIndex] = useState(0);
   const [tapped, setTapped] = useState(false);
@@ -47,8 +54,11 @@ export default function TapAndSay({ navigation, packId }) {
   useEffect(() => () => stopAudio(), []);
 
   const handleTap = () => {
+    ensureSession();
     playWord(currentWord.id, currentWord.es);
     recordWordHeard(currentWord.id);
+    recordWordInSession(currentWord.id);
+    recordExposure(currentWord.id, 'tap_say');
 
     // Bounce animation
     Animated.sequence([
@@ -65,6 +75,10 @@ export default function TapAndSay({ navigation, packId }) {
   };
 
   const handleNext = () => {
+    if (sessionExpired) {
+      navigation.replace('sessioncomplete');
+      return;
+    }
     if (index + 1 >= words.length) {
       setFinished(true);
     } else {
@@ -148,6 +162,8 @@ export default function TapAndSay({ navigation, packId }) {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <CoUsePrompt wordIndex={index} currentWord={currentWord} visible={tapped} />
 
         {showConfetti && (
           <ConfettiCannon

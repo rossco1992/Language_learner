@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,8 +17,15 @@ import { COLORS, SPACING, RADIUS, cardShadow } from '../theme';
 const { width } = Dimensions.get('window');
 const CARD = (width - SPACING.lg * 2 - SPACING.md) / 2;
 
+const MODES = [
+  { id: 'Show',    icon: '📺', label: 'Ver',      gradient: ['#FF4757', '#FF6B81'] },
+  { id: 'videos',  icon: '🎬', label: 'Videos',   gradient: ['#F7971E', '#FFD200'] },
+  { id: 'Explore', icon: '🔍', label: 'Explorar', gradient: ['#11998E', '#38EF7D'] },
+  { id: 'Game',    icon: '🎮', label: 'Jugar',    gradient: ['#8B5CF6', '#EC4899'] },
+];
+
 export default function ChildHome({ navigation }) {
-  const { isPackUnlocked, uniqueWordsHeard, settings } = useParent();
+  const { isPackUnlocked } = useParent();
 
   // Floating mascot
   const floatY = useRef(new Animated.Value(0)).current;
@@ -46,56 +54,73 @@ export default function ChildHome({ navigation }) {
       <View style={[styles.orb, { width: 160, height: 160, bottom: 120, left: -60 }]} />
 
       <SafeAreaView style={styles.safe}>
-        {/* Parent gate button — small, top right */}
-        <View style={styles.topBar}>
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity
-            onPress={() => navigation.navigate('parentgate')}
-            style={styles.parentBtn}
-          >
-            <Text style={styles.parentBtnText}>🔒</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Mascot + greeting */}
-        <View style={styles.hero}>
-          <Animated.Text style={[styles.mascot, { transform: [{ translateY: floatY }] }]}>
-            🦉
-          </Animated.Text>
-          <Text style={styles.greeting}>¡Hola!</Text>
-          <Text style={styles.subGreeting}>What do you want to learn today?</Text>
-        </View>
-
-        {/* Progress pill */}
-        {uniqueWordsHeard > 0 && (
-          <View style={styles.progressPill}>
-            <Text style={styles.progressText}>⭐ {uniqueWordsHeard} words learned!</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Parent gate button — small, top right */}
+          <View style={styles.topBar}>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('parentgate')}
+              style={styles.parentBtn}
+            >
+              <Text style={styles.parentBtnText}>🔒</Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* 2×2 Pack grid */}
-        <View style={styles.grid}>
-          {PACKS.map((pack, i) => {
-            const anim = cardAnims[i];
-            const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
-            return (
-              <Animated.View
-                key={pack.id}
-                style={[
-                  { width: CARD, borderRadius: RADIUS.lg },
-                  cardShadow(pack.gradient[0]),
-                  { transform: [{ scale }], opacity: anim },
-                ]}
+          {/* Mascot + greeting */}
+          <View style={styles.hero}>
+            <Animated.Text style={[styles.mascot, { transform: [{ translateY: floatY }] }]}>
+              🦉
+            </Animated.Text>
+            <Text style={styles.greeting}>¡Hola!</Text>
+            <Text style={styles.subGreeting}>¿Qué quieres aprender hoy?</Text>
+          </View>
+
+          {/* 2×2 Pack grid */}
+          <View style={styles.grid}>
+            {PACKS.map((pack, i) => {
+              const anim = cardAnims[i];
+              const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+              return (
+                <Animated.View
+                  key={pack.id}
+                  style={[
+                    { width: CARD, borderRadius: RADIUS.lg },
+                    cardShadow(pack.gradient[0]),
+                    { transform: [{ scale }], opacity: anim },
+                  ]}
+                >
+                  <PackCard
+                    pack={pack}
+                    unlocked={isPackUnlocked(pack.id)}
+                    onPress={() => navigation.navigate('pack', { packId: pack.id })}
+                  />
+                </Animated.View>
+              );
+            })}
+          </View>
+
+          {/* More activities row */}
+          <Text style={styles.moreLabel}>More activities</Text>
+          <View style={styles.modesRow}>
+            {MODES.map((mode) => (
+              <TouchableOpacity
+                key={mode.id}
+                onPress={() => navigation.navigate(mode.id)}
+                activeOpacity={0.8}
               >
-                <PackCard
-                  pack={pack}
-                  unlocked={isPackUnlocked(pack.id)}
-                  onPress={() => navigation.navigate('pack', { packId: pack.id })}
-                />
-              </Animated.View>
-            );
-          })}
-        </View>
+                <LinearGradient
+                  colors={mode.gradient}
+                  style={styles.modeChip}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.modeIcon}>{mode.icon}</Text>
+                  <Text style={styles.modeLabel}>{mode.label}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -189,27 +214,42 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  progressPill: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
+  scrollContent: {
+    paddingBottom: SPACING.xxl,
   },
-  progressText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
 
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: SPACING.lg,
     gap: SPACING.md,
-    flex: 1,
     alignContent: 'center',
-    paddingBottom: SPACING.xl,
   },
+
+  moreLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.6)',
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  modesRow: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  modeChip: {
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: (width - SPACING.lg * 2 - SPACING.sm * 3) / 4,
+    aspectRatio: 1,
+  },
+  modeIcon: { fontSize: 28, marginBottom: 4 },
+  modeLabel: { fontSize: 11, fontWeight: '800', color: COLORS.white },
 
   card: {
     width: CARD,

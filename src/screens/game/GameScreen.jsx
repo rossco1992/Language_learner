@@ -14,6 +14,8 @@ import { getAllWordsFromCurriculum } from '../../data/curriculum';
 import { useSpeech } from '../../hooks/useSpeech';
 import { useAge } from '../../context/AgeContext';
 import GameChoice, { getChoiceLayout } from './GameChoice';
+import { useSession } from '../../context/SessionContext';
+import { useWordTracker } from '../../context/WordTrackerContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../../theme';
 
 const { width } = Dimensions.get('window');
@@ -31,10 +33,11 @@ export default function GameScreen({ navigation }) {
   const numChoices = ageProfile?.gameChoices ?? 3;
   const allWords = getAllWordsFromCurriculum(level);
   const { speakPhrase, speak, stop } = useSpeech();
+  const { ensureSession, recordWordInSession, sessionExpired } = useSession();
+  const { recordExposure } = useWordTracker();
 
   const [question, setQuestion] = useState(() => pickQuestion(allWords, numChoices));
   const [choiceStates, setChoiceStates] = useState({});
-  const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -71,24 +74,33 @@ export default function GameScreen({ navigation }) {
     setAnswered(true);
 
     const isCorrect = word.id === question.correct.id;
+    ensureSession();
     setChoiceStates((prev) => ({ ...prev, [word.id]: isCorrect ? 'correct' : 'wrong' }));
 
     if (isCorrect) {
-      setScore((s) => s + 1);
+      recordWordInSession(question.correct.id);
+      recordExposure(question.correct.id, 'game');
       setShowConfetti(true);
       showCelebration();
       speak('¡Muy bien!');
       setTimeout(() => { hideCelebration(); nextQuestion(); }, 2000);
     } else {
+      // Gentle correction: highlight the correct answer and say the word
       setTimeout(() => {
-        setChoiceStates((prev) => ({ ...prev, [question.correct.id]: 'correct' }));
+        setChoiceStates((prev) => ({ ...prev, [word.id]: 'idle', [question.correct.id]: 'correct' }));
         speak(question.correct.es);
-      }, 600);
-      setTimeout(nextQuestion, 2500);
+      }, 400);
+      setTimeout(nextQuestion, 2200);
     }
   };
 
-  const nextQuestion = () => setQuestion(pickQuestion(allWords, numChoices));
+  const nextQuestion = () => {
+    if (sessionExpired) {
+      navigation.replace('sessioncomplete');
+      return;
+    }
+    setQuestion(pickQuestion(allWords, numChoices));
+  };
 
   return (
     <LinearGradient colors={['#FFF0F8', '#F0F8FF', '#F8FFF0']} style={styles.gradient}>
@@ -98,9 +110,7 @@ export default function GameScreen({ navigation }) {
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>¡Jugar! 🎮</Text>
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>⭐ {score}</Text>
-          </View>
+          <View style={styles.backBtn} />
         </View>
 
         <View style={styles.promptContainer}>
@@ -108,7 +118,6 @@ export default function GameScreen({ navigation }) {
           <View style={styles.correctWordCard}>
             <Text style={styles.correctWordEmoji}>{question.correct.emoji}</Text>
             <Text style={styles.correctWord}>{question.correct.es}</Text>
-            <Text style={styles.correctWordEn}>{question.correct.en}</Text>
           </View>
           <TouchableOpacity onPress={() => speakPhrase(`¿Dónde está ${question.correct.es}?`)} style={styles.repeatBtn}>
             <Text style={styles.repeatText}>🔊 Repeat</Text>
@@ -188,8 +197,6 @@ const styles = StyleSheet.create({
   backBtn: { width: 70, paddingVertical: SPACING.sm },
   backText: { color: COLORS.primary, fontSize: 16, fontWeight: '600' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: COLORS.dark },
-  scoreBadge: { backgroundColor: '#FFD93D', borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, ...SHADOW.card },
-  scoreText: { fontSize: 18, fontWeight: '800', color: COLORS.dark },
   promptContainer: { alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.lg, flex: 1, justifyContent: 'center' },
   promptLabel: { fontSize: 26, fontWeight: '700', color: COLORS.gray, marginBottom: SPACING.md },
   correctWordCard: { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, paddingVertical: SPACING.xl, paddingHorizontal: SPACING.xxl, alignItems: 'center', ...SHADOW.card, width: '100%' },

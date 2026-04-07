@@ -35,30 +35,20 @@ export default function GameChoice({ word, onPress, state, index = 0 }) {
 
   useEffect(() => {
     if (state === 'correct') {
+      // Celebratory bounce for the correct answer
       Animated.sequence([
         Animated.spring(scale,  { toValue: 1.15, useNativeDriver: true, damping: 5, stiffness: 200 }),
         Animated.spring(scale,  { toValue: 1,    useNativeDriver: true }),
       ]).start();
-    } else if (state === 'wrong') {
-      Animated.sequence([
-        Animated.timing(shakeX, { toValue: -12, duration: 55, useNativeDriver: true }),
-        Animated.timing(shakeX, { toValue: 12,  duration: 55, useNativeDriver: true }),
-        Animated.timing(shakeX, { toValue: -8,  duration: 55, useNativeDriver: true }),
-        Animated.timing(shakeX, { toValue: 8,   duration: 55, useNativeDriver: true }),
-        Animated.timing(shakeX, { toValue: 0,   duration: 55, useNativeDriver: true }),
-      ]).start();
     }
+    // No shake or negative feedback for wrong answers
   }, [state]);
 
   const gradientColors =
     state === 'correct' ? ['#2ECC82', '#26B870'] :
-    state === 'wrong'   ? ['#FF5F7E', '#E84060'] :
     IDLE_GRADIENTS[index % IDLE_GRADIENTS.length];
 
-  const shadowColor =
-    state === 'correct' ? '#2ECC82' :
-    state === 'wrong'   ? '#FF5F7E' :
-    gradientColors[0];
+  const shadowColor = state === 'correct' ? '#2ECC82' : gradientColors[0];
 
   return (
     <Animated.View
@@ -83,10 +73,10 @@ export default function GameChoice({ word, onPress, state, index = 0 }) {
 
           <Text style={styles.emoji}>{word.emoji}</Text>
 
-          {/* State badge */}
-          {state !== 'idle' && (
-            <View style={[styles.stateBadge, state === 'correct' ? styles.badgeCorrect : styles.badgeWrong]}>
-              <Text style={styles.stateBadgeText}>{state === 'correct' ? '✓' : '✕'}</Text>
+          {/* Celebration badge — correct only */}
+          {state === 'correct' && (
+            <View style={[styles.stateBadge, styles.badgeCorrect]}>
+              <Text style={styles.stateBadgeText}>⭐</Text>
             </View>
           )}
         </LinearGradient>
@@ -124,6 +114,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeCorrect: { backgroundColor: 'rgba(0,0,0,0.2)' },
-  badgeWrong:   { backgroundColor: 'rgba(0,0,0,0.2)' },
   stateBadgeText: { color: COLORS.white, fontSize: 14, fontWeight: '900' },
 });

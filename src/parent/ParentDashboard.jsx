@@ -6,15 +6,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PACKS } from '../content/packs';
 import { useParent } from '../context/ParentContext';
+import { useWordTracker } from '../context/WordTrackerContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../theme';
 
 const SESSION_OPTIONS = [3, 5, 10, 15];
 
 export default function ParentDashboard({ navigation }) {
-  const { settings, updateSetting, uniqueWordsHeard, resetProgress } = useParent();
+  const { settings, updateSetting, resetProgress } = useParent();
+  const { totalWordsIntroduced, totalWordsMastered, resetTracker } = useWordTracker();
 
   const totalWords = PACKS.reduce((s, p) => s + p.words.length, 0);
-  const wordsReplayed = Object.values(settings.wordsHeard).filter((c) => c > 1).length;
 
   return (
     <LinearGradient colors={['#1A0B2E', '#3B1F6A']} style={styles.gradient}>
@@ -29,16 +30,16 @@ export default function ParentDashboard({ navigation }) {
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Progress summary */}
-          <Section title="Today's Progress" emoji="📊">
+          <Section title="Learning Journey" emoji="📊">
             <View style={styles.statsRow}>
-              <StatCard value={uniqueWordsHeard} label="Words heard" color="#6B3FA0" />
-              <StatCard value={wordsReplayed} label="Replayed" color="#38EF7D" />
+              <StatCard value={totalWordsIntroduced} label="Words heard" color="#6B3FA0" />
+              <StatCard value={totalWordsMastered} label="Mastered" color="#38EF7D" />
               <StatCard value={settings.totalSessions} label="Sessions" color="#FF8E53" />
             </View>
             <View style={styles.progressBarOuter}>
-              <View style={[styles.progressBarFill, { width: `${Math.min(100, (uniqueWordsHeard / totalWords) * 100)}%` }]} />
+              <View style={[styles.progressBarFill, { width: `${Math.min(100, (totalWordsIntroduced / totalWords) * 100)}%` }]} />
             </View>
-            <Text style={styles.progressLabel}>{uniqueWordsHeard} / {totalWords} words explored</Text>
+            <Text style={styles.progressLabel}>{totalWordsIntroduced} / {totalWords} words explored</Text>
           </Section>
 
           {/* Learning settings */}
@@ -95,7 +96,7 @@ export default function ParentDashboard({ navigation }) {
           </View>
 
           {/* Reset */}
-          <TouchableOpacity onPress={resetProgress} style={styles.resetBtn}>
+          <TouchableOpacity onPress={() => { resetProgress(); resetTracker(); }} style={styles.resetBtn}>
             <Text style={styles.resetText}>Reset progress</Text>
           </TouchableOpacity>
         </ScrollView>

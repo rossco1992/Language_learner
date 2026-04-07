@@ -50,14 +50,16 @@ export default function UnitScreen({ navigation, unitId }) {
           <View style={styles.backBtn} />
         </LinearGradient>
 
-        {/* Progress summary */}
+        {/* Progress summary — stars only, no percentages */}
         <View style={styles.progressBox}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: unit.gradient[0] }]} />
+          <View style={styles.starsRow}>
+            {lessons.map((l) => (
+              <Text key={l.id} style={styles.starIcon}>
+                {isLessonComplete(unit.id, l.id) ? '⭐' : '☆'}
+              </Text>
+            ))}
           </View>
-          <Text style={styles.progressLabel}>
-            {pct === 100 ? '🎉 All done!' : `${pct}% complete · ${lessons.length} lessons`}
-          </Text>
+          {pct === 100 && <Text style={styles.progressLabel}>🎉 ¡Perfecto!</Text>}
         </View>
 
         {/* Lessons list */}
@@ -118,10 +120,10 @@ const styles = StyleSheet.create({
   headerEmoji: { fontSize: 40 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: COLORS.white, marginTop: 4, textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   headerTitleEs: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
-  progressBox: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
-  progressTrack: { height: 8, backgroundColor: COLORS.lightGray, borderRadius: RADIUS.full, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: RADIUS.full },
-  progressLabel: { fontSize: 13, fontWeight: '600', color: COLORS.gray, marginTop: 6, textAlign: 'center' },
+  progressBox: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, alignItems: 'center' },
+  starsRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' },
+  starIcon: { fontSize: 22 },
+  progressLabel: { fontSize: 16, fontWeight: '700', color: COLORS.gray, marginTop: 6, textAlign: 'center' },
   list: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl, gap: SPACING.sm },
   lessonRow: {
     flexDirection: 'row',

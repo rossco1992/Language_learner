@@ -43,7 +43,6 @@ export default function ExploreScreen({ navigation }) {
         <View style={styles.statsBar}>
           <StatPill emoji="📚" value={units.length} label="units" />
           <StatPill emoji="✏️" value={totalWords} label="words" />
-          <StatPill emoji="🏆" value={`${units.filter(u => getUnitProgress(u) === 1).length}/${units.length}`} label="done" />
         </View>
 
         <FlatList
@@ -112,11 +111,9 @@ function UnitCard({ unit, level, progress, onPress }) {
             <Text style={styles.wordCountText}>{wordCount} words</Text>
           </View>
 
-          {/* Progress bar */}
+          {/* Star for explored units */}
           {pct > 0 && (
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${pct}%` }]} />
-            </View>
+            <Text style={styles.exploredStar}>{pct === 100 ? '⭐' : '🌱'}</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
@@ -204,13 +201,5 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   wordCountText: { fontSize: 11, fontWeight: '800', color: COLORS.white },
-  progressTrack: {
-    width: '85%',
-    height: 5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: RADIUS.full,
-    marginTop: SPACING.sm,
-    overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: RADIUS.full },
+  exploredStar: { fontSize: 18, marginTop: SPACING.sm },
 });
